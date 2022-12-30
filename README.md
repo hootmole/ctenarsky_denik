@@ -6,8 +6,8 @@
 ## 4. Strucny obsah dila
 ## 5. Charakteristika hl. postav
 ## 6. Lit. druh a žánr (lirika, epika, drama - tragedie
-                                             - komedie
-                                             )
+##                                           - komedie
+##                                           )
 ## 7. Casoprostor (kdy a kde se dej odehrava)
 ## 8. Okolnosti vzniku díla
 ## 9. Hl myslenka dila (Tema knihy a motiv)
