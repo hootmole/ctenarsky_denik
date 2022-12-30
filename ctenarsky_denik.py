@@ -1,3 +1,12 @@
+"""
+this file will act as the main text generator, collecting all the necessary text.
+Then a post-processing pipeline will be used, such as error correction and text optimization.
+In the final stage, the data will be translated and placed in a user-friendly file such as word (docx).
+"""
+
+
+
+
 import requests
 import json
 import deepl
