@@ -1,0 +1,2 @@
+deepl: <your deepl key>
+openai: <your openai key>
