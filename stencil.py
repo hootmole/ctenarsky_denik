@@ -63,6 +63,6 @@ The motif originated in Italy
 The play explores the destructive power of hatred and conflict, as the feud between the Montagues and the Capulets ultimately leads to the tragic deaths of Romeo and Juliet. This serves to emphasize the idea that love is a powerful force that can overcome hatred and conflict, and that it is important to strive for understanding and reconciliation rather than division and strife.
     """,
     """
-Dílo je velmi zajímavé. Jako zápor vidím popis lásky mezi Romeem a Julií, příjde mi to nereálné až přehnané. Kniha je plná krásné slovní zásoby a myšlenka díla je velmi silná.
+The work is very interesting. As a negative I see the description of the love between Romeo and Juliet, it seems unrealistic to the point of exaggeration. The book is full of beautiful vocabulary and the idea of the work is very strong.
     """
 ]
