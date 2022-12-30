@@ -49,12 +49,5 @@ def openai_response(prompt: str, token_lenght=150, ) -> str:
     return response['choices'][0]['text'].replace("\n", " ")
 
 
-# stencil list, used for storing stock data for Languange Model ML (openai GPT) guidence
 
-stencil = [
-    """
-    author: William Shakespeare
-    ilustrator: none
 
-    """
-]
