@@ -4,9 +4,6 @@ Then a post-processing pipeline will be used, such as error correction and text 
 In the final stage, the data will be translated and placed in a user-friendly file such as word (docx).
 """
 
-
-
-
 import requests
 import json
 import deepl
@@ -21,7 +18,11 @@ import numpy
 
 # global functions
 def translateTo(text: str, target_lang="CS") -> str:
-    deepl_key = "674e3591-912f-797e-09bc-591d8631b111:fx"
+    with open("key.txt", "r") as key:
+        for line in key.readlines():
+            if "deepl: " in line:
+                deepl_key = line.replace("deepl: ", "").replace("\n", "")
+
     translator = deepl.Translator(deepl_key)
     result = translator.translate_text(text, target_lang=target_lang)
     translated_funfact = result.text
@@ -30,7 +31,10 @@ def translateTo(text: str, target_lang="CS") -> str:
 
 
 def openai_response(prompt: str, token_lenght=150, ) -> str:
-    openai.api_key = "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"
+    with open("key.txt", "r") as key:
+        for line in key.readlines():
+            if "openai: " in line:
+                openai.api_key = line.replace("openai: ", "").replace("\n", "")
 
     response = openai.Completion.create(
         model="text-davinci-003",
@@ -44,3 +48,13 @@ def openai_response(prompt: str, token_lenght=150, ) -> str:
 
     return response['choices'][0]['text'].replace("\n", " ")
 
+
+# stencil list, used for storing stock data for Languange Model ML (openai GPT) guidence
+
+stencil = [
+    """
+    author: William Shakespeare
+    ilustrator: none
+
+    """
+]
