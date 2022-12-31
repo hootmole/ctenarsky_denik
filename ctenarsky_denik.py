@@ -40,13 +40,16 @@ def openai_response(prompt: str, token_lenght=150, ) -> str:
         model="text-davinci-003",
         prompt=prompt,
         temperature=0.7,
-        max_tokens=150,
+        max_tokens=token_lenght,
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0
     )
 
     return response['choices'][0]['text'].replace("\n", " ")
+
+
+
 
 
 
