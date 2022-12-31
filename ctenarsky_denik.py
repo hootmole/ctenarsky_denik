@@ -3,7 +3,7 @@ this file will act as the main text generator, collecting all the necessary text
 Then a post-processing pipeline will be used, such as error correction and text optimization.
 In the final stage, the data will be translated and placed in a user-friendly file such as word (docx).
 """
-
+# base libraries
 import requests
 import json
 import deepl
@@ -13,7 +13,9 @@ import openai
 import math
 import cv2
 import numpy
-# base libraries
+
+# external files
+import stencil
 
 
 # global functions
@@ -138,13 +140,28 @@ class bibliographic_data:
             self.Publisher(),
             self.Page_Count(),
         ]
-        print(error_rate)
+        # print(error_rate)
         error_rate = (5 - sum(error_rate)) * 10
         print("Error rate:", error_rate, "%")
         return self.output
         
 
+class author_info:
+    def __init__(self, author) -> None:
+        self.author = author
+        self.output = ""
+        self.tokens = 250
+
+    def get_data(self):
+        data = openai_response(
+            f"give me some info on {self.author} using the text provided as reference, make your text a bit longer than the text provided and try to touch the same points as in the reference text.\n'{stencil.stencil_filled[1]}'",
+            self.tokens
+        )
+        return data
 
 
-a = bibliographic_data("CS")
-print(a.complete())
+
+
+
+a = author_info("Moliere")
+print(a.get_data())
