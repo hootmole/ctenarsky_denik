@@ -262,11 +262,70 @@ class type_genre_classification:
             self.output["genre"] = f"({data})"
             return -1
 
+class space_time:
+    def __init__(self) -> None:
+        self.on_error_repeats = 3
+        self.output = {
+            "place": "",
+            "time": "",
+        }
+
+    def get_data(self):
+        data = openai_response(
+            f"where the plot of the book {book} takes place. answer as straight as possible.",
+        )
+        self.output["place"] = data
+        data = openai_response(
+            f"at what time the plot of the book {book} happened. answer with the time period only.",
+        )
+        self.output["time"] = data
+        return 1
+
+
+class circumstances:
+    def __init__(self) -> None:
+        self.output = ""
+        self.tokens = 350
+
+    def get_data(self):
+        data = openai_response(
+            f"write me a text about the circumstances of writing the book {book}, do not write about the content of the book",
+            self.tokens,
+        )
+        self.output = data
+        return 1
+
+class philosophy:
+    def __init__(self) -> None:
+        self.output = ""
+        self.tokens = 350
+
+    def get_data(self):
+        data = openai_response(
+            f"write me about the thought of the book {book}, write about the idea, that the book is introducing. do not add any introduction to the text.",
+            self.tokens,
+        )
+        self.output = data
+        return 1
     
+class opinion:
+    def __init__(self) -> None:
+        self.output = ""
+        self.tokens = 350
 
-book = "La Boule de Suif"
+    def get_data(self):
+        data = openai_response(
+            f"write me a text as a student talking about his opinions on the book {book}.",
+            self.tokens,
+        )
+        self.output = data
+        return 1
 
 
-a = type_genre_classification()
-a.complete()
+
+book = "Boule de Suif"
+
+
+a = philosophy()
+a.get_data()
 print(a.output)
