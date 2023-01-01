@@ -48,17 +48,18 @@ def openai_response(prompt: str, token_lenght=150, ) -> str:
         presence_penalty=0
     )
 
-    resp =  response['choices'][0]['text'].replace("\n", " ")
+    resp =  response['choices'][0]['text']
     # for removing unvanted spaces in front of a response
     for char in resp:
-        if char == " ":
+        if char == " " or char == "\n":
             resp = resp[1:]
         else:
             return resp
 
 
+def text_only(text: str) -> str:
+    return text.replace(".", "").replace(",", "").replace("-", "").replace("\n", "").replace(" ", "")
 
-book = "Hamlet"
 
 
 class bibliographic_data:
@@ -192,7 +193,73 @@ class style_info:
             return -1
 
 
+class characteristics:
+    def __init__(self) -> None:
+        self.max_character_count = 3
+        self.output = ""
+        self.tokens = 300
+        self.on_error_repeats = 3
 
-a = style_info("Moliere")
-a.get_style_info()
+    def get_data(self):
+        for _ in range(self.on_error_repeats):
+            data = openai_response(
+                f"Describe main characters in {book}. Max {self.max_character_count}. Let the each paragraph start with number.",
+                self.tokens
+            )
+            if (data.count("\n") - 1) <= self.max_character_count:
+                self.output = data
+                return 1
+        self.output = "Unknown"
+        return -1
+
+
+class type_genre_classification:
+    def __init__(self) -> None:
+        self.on_error_repeats = 10
+        self.literar_class_index: int
+        self.output = {
+            "literar_class": "",
+            "genre": "",
+        }
+
+    def get_literar_class(self):
+        for _ in range(self.on_error_repeats):
+            data = openai_response(
+                f"what literar class is the book {book}, choose from these options and type your chosen answer only\n{' '.join(stencil.literar_classes)}."
+            )
+            data = text_only(data)
+            try:
+                if data.lower() in stencil.literar_classes:
+                    self.literar_class_index = stencil.literar_classes.index(data.lower())
+                    self.output["literar_class"] = data
+                    return 1
+            except:
+                continue
+        self.output["literar_class"] = "Unknown"
+        return -1
+
+    def complete(self):
+        if self.get_literar_class() == 1:
+            for _ in range(self.on_error_repeats):
+                options = stencil.literar_classes_options[self.literar_class_index]
+                data = openai_response(
+                    f"what genre is the book {book}, choose from these options, type the your chosen option, nothing more\n{' '.join(options)}."
+                )
+                data = text_only(data)
+                if data.lower() in options:
+                    self.output["genre"] = data
+                    return 1
+            self.output["genre"] = "Unknown"
+            return -1
+        else:
+            self.output["genre"] = "Unknown"
+            return -1
+
+    
+
+book = "Harpagon"
+
+
+a = type_genre_classification()
+a.complete()
 print(a.output)

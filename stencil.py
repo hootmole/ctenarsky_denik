@@ -157,3 +157,58 @@ style_points = [
     "Political changes",
     "Impact on the civilization",
 ]
+
+literar_classes = [
+    "lyric",
+    "epic",
+    "drama",
+    
+]
+
+lyric_genres = [
+    "hymn",
+    "ode",
+    "sonnet",
+    "song",
+    "elegy",
+    "villonic ballad",
+    "epigram",
+    "proverb",
+    "travelogue",
+    "ballad",
+    "romance",
+]
+
+epic_genres = [
+    "novel",
+    "novella",
+    "story",
+    "fable",
+    "legend",
+    "myth",
+    "tale",
+    "fairy tale",
+    "chronicle",
+    "ballad",
+    "romance",
+]
+
+drama_genres = [
+    "comedy",
+    "tragedy",
+    "tragicomedy",
+    "historical play",
+    "farce",
+    "opera",
+    "operetta",
+    "musical",
+    "ballad",
+    "romance",
+]
+
+
+literar_classes_options = [
+    lyric_genres,
+    epic_genres,
+    drama_genres, 
+]
