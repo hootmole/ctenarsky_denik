@@ -13,6 +13,7 @@ import openai
 import math
 import cv2
 import numpy
+import re
 
 # external files
 import stencil
@@ -58,7 +59,7 @@ def openai_response(prompt: str, token_lenght=150, ) -> str:
 
 
 def text_only(text: str) -> str:
-    return text.replace(".", "").replace(",", "").replace("-", "").replace("\n", "").replace(" ", "")
+    return re.sub(r'[^a-zA-Z]', '', text)
 
 
 
@@ -235,7 +236,9 @@ class type_genre_classification:
                     return 1
             except:
                 continue
-        self.output["literar_class"] = "Unknown"
+
+        
+        self.output["literar_class"] = f"({data})"
         return -1
 
     def complete(self):
@@ -252,12 +255,16 @@ class type_genre_classification:
             self.output["genre"] = "Unknown"
             return -1
         else:
-            self.output["genre"] = "Unknown"
+            data = openai_response(
+                    f"what genre is the book {book}, single word response only."
+                )
+            data = text_only(data)
+            self.output["genre"] = f"({data})"
             return -1
 
     
 
-book = "Harpagon"
+book = "La Boule de Suif"
 
 
 a = type_genre_classification()
