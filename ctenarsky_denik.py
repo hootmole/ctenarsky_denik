@@ -157,11 +157,42 @@ class author_info:
             f"give me some info on {self.author} using the text provided as reference, make your text a bit longer than the text provided and try to touch the same points as in the reference text.\n'{stencil.stencil_filled[1]}'",
             self.tokens
         )
-        return data
+        self.output = data
+        return 1
+
+
+class style_info:
+    def __init__(self, author) -> None:
+        self.author = author
+        self.output = ""
+        self.tokens = 350
+        self.style = ""
+        self.on_error_repeats = 3
+
+    def get_style_name(self):
+        for _ in range(self.on_error_repeats):
+            style = openai_response(f"what artistic style does {self.author} belong to? Use single word only. Choose from these: {' '.join(stencil.artistic_styles)}")
+            if style.lower() in stencil.artistic_styles:
+                self.style = style
+                return 1
+        self.style = "Unknown"
+        return -1
+
+    def get_style_info(self):
+        if self.get_style_name() == 1:
+            data = openai_response(
+                f"write me a text about {self.style}, focus on these points:\n{' '.join(stencil.style_points)}",
+                self.tokens
+            )
+            self.output = data
+            return 1
+        else:
+            self.output = "Unknown"
+            print("Error with collecting the style info")
+            return -1
 
 
 
-
-
-a = author_info("Moliere")
-print(a.get_data())
+a = style_info("Moliere")
+a.get_style_info()
+print(a.output)

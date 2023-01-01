@@ -134,3 +134,26 @@ The work is very interesting. As a negative I see the description of the love be
     """
 ]
 
+artistic_styles = [
+    "antics"
+    "romanesque style",
+    "gothic",
+    "renaissance",
+    "baroque",
+    "rococo",
+    "classicism",
+    "impressionism",
+    "romanticism",
+    "pre-romanticism",
+
+]
+
+style_points = [
+    "Time span when it happened",
+    "main hystorical events and how they shaped the society",
+    "What was important and what was taken care of",
+    "Andvances in science",
+    "New ideas",
+    "Political changes",
+    "Impact on the civilization",
+]
