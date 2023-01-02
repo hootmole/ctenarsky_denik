@@ -351,7 +351,7 @@ class opinion:
 
     def get_data(self, result, index):
         data = openai_response(
-            f"write me a text as a student talking about his opinions on the book {book}.",
+            f"write me a text where you rate the book {book} and talk about your opinion, from {'male' if opinion_guide['is_man'] else 'female'} perspective, the evaluation of the text is expressed by the following value: {opinion_guide['book_rating']}, 1 is worst and 10 best, some additional info: {opinion_guide['additional_info']}",
             self.tokens,
         )
         self.output = translateTo(data, language)
@@ -360,71 +360,83 @@ class opinion:
 
 
 
-book = "Máj"
+def main(book, language):
+
+    bib = bibliographic_data(language)
+    bib.complete()
+    Author = bib.output["Author"]
+
+    aut = author_info(Author)
+    sty = style_info(Author)
+    con = content()
+    cha = characteristics()
+    typ = type_genre_classification()
+    spa = space_time()
+    cir = circumstances()
+    phi = philosophy()
+    opi = opinion()
+
+    text_classes = [bib, aut, sty, con, cha, typ, spa, cir, phi, opi]
+    results = [None] * 9
+
+    t1 = threading.Thread(target=aut.get_data, args=(results, 0))
+    t2 = threading.Thread(target=sty.get_data, args=(results, 1))
+    t3 = threading.Thread(target=con.get_data, args=(results, 2))
+    t4 = threading.Thread(target=cha.get_data, args=(results, 3))
+    t5 = threading.Thread(target=typ.complete, args=(results, 4))
+    t6 = threading.Thread(target=spa.get_data, args=(results, 5))
+    t7 = threading.Thread(target=cir.get_data, args=(results, 6))
+    t8 = threading.Thread(target=phi.get_data, args=(results, 7))
+    t9 = threading.Thread(target=opi.get_data, args=(results, 8))
+
+    threads = [t1, t2, t3, t4, t5, t6, t7, t8, t9]
+
+
+    for t in threads:
+        t.start()
+
+    for t in threads:
+        t.join()
+
+    for i, value in enumerate(results):
+        if value == None:
+            results[i] = -1
+
+    error_rate = (len(threads) - sum(results)) / (len(threads) * 2)
+
+    print(results)
+    print(error_rate)
+
+    #create word document
+
+    document = Document()
+
+    document.add_heading(translateTo("Čtenářský deník", language))
+
+    for text_class in text_classes:
+        document.add_heading(text_class.category, 2)
+
+        if type(text_class.output) == type("lol"):
+            document.add_paragraph(str(text_class.output))
+        
+        else:
+            keys = list(text_class.output.keys())
+            for key in keys:
+                document.add_heading(key, 3)
+                document.add_paragraph(str(text_class.output[key]))
+
+
+    document.save("result.docx")
+
+
+
+book = "Démon (Lermontov)"
 language = "CS"
+opinion_guide = {
+    "book_rating": 6,      # integer [1, 10], how much is the opinion author enjoying the book (1 worst, 10 best)
+    "is_man": True,            # boolean, for determining the sex of opinion author
+    "additional_info": "Student in high school"   # string, ads some more info for specifing the opinion author
+}
 
-bib = bibliographic_data(language)
-bib.complete()
-Author = bib.output["Author"]
-
-aut = author_info(Author)
-sty = style_info(Author)
-con = content()
-cha = characteristics()
-typ = type_genre_classification()
-spa = space_time()
-cir = circumstances()
-phi = philosophy()
-opi = opinion()
-
-text_classes = [bib, aut, sty, con, cha, typ, spa, cir, phi, opi]
-results = [None] * 9
-
-t1 = threading.Thread(target=aut.get_data, args=(results, 0))
-t2 = threading.Thread(target=sty.get_data, args=(results, 1))
-t3 = threading.Thread(target=con.get_data, args=(results, 2))
-t4 = threading.Thread(target=cha.get_data, args=(results, 3))
-t5 = threading.Thread(target=typ.complete, args=(results, 4))
-t6 = threading.Thread(target=spa.get_data, args=(results, 5))
-t7 = threading.Thread(target=cir.get_data, args=(results, 6))
-t8 = threading.Thread(target=phi.get_data, args=(results, 7))
-t9 = threading.Thread(target=opi.get_data, args=(results, 8))
-
-threads = [t1, t2, t3, t4, t5, t6, t7, t8, t9]
-
-
-for t in threads:
-    t.start()
-
-for t in threads:
-    t.join()
-
-for i, value in enumerate(results):
-    if value == None:
-        results[i] = -1
-
-error_rate = (len(threads) - sum(results)) / (len(threads) * 2)
-
-print(results)
-print(error_rate)
-
-#create word document
-
-document = Document()
-
-document.add_heading(translateTo("Čtenářský deník", language))
-
-for text_class in text_classes:
-    document.add_heading(text_class.category, 2)
-
-    if type(text_class.output) == type("lol"):
-        document.add_paragraph(str(text_class.output))
-    
-    else:
-        keys = list(text_class.output.keys())
-        for key in keys:
-            document.add_heading(key, 3)
-            document.add_paragraph(str(text_class.output[key]))
-
-
-document.save("result.docx")
+if __name__ == "__main__":
+    main(book, language)
