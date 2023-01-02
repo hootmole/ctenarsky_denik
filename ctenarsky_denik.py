@@ -14,6 +14,8 @@ import math
 import cv2
 import numpy
 import re
+from docx import Document
+import threading
 
 # external files
 import stencil
@@ -69,6 +71,7 @@ class bibliographic_data:
         self.max_words_person_name = 4 # insurance for checking if the name responses are valid
         self.max_words_publisher_name = 5 # insurance for checking if the publisher response is valid
         self.on_error_repeats = 3 # insurance for checking if the publisher response is valid
+        self.category = translateTo(stencil.categories[0], language)
         self.output = {
             "Author": "",
             "Illustrator": "",
@@ -83,7 +86,7 @@ class bibliographic_data:
             if data.count(" ") < self.max_words_person_name:
                 self.output["Author"] = data
                 return 1
-        print("There is problem with collecting book author name")
+        
         self.output["Author"] = "Unknown"
         return -1
 
@@ -93,7 +96,7 @@ class bibliographic_data:
             if data.count(" ") < self.max_words_person_name:
                 self.output["Illustrator"] = data
                 return 1
-        print("There is problem with collecting book illustrator name")
+        
         self.output["Illustrator"] = "Unknown"
         return -1
 
@@ -104,7 +107,7 @@ class bibliographic_data:
                 if data.count(" ") < self.max_words_person_name and data != self.output["Author"]:
                     self.output["Translator"] = data
                     return 1
-            print("There is problem with collecting book translator name")
+            
             self.output["Translator"] = "Unknown"
             return -1
         else:
@@ -118,7 +121,7 @@ class bibliographic_data:
             if data.count(" ") < self.max_words_person_name:
                 self.output["Publisher"] = data
                 return 1
-        print("There is problem with collecting book publisher name")
+        
         self.output["Publisher"] = "Unknown"
         return -1
 
@@ -130,7 +133,7 @@ class bibliographic_data:
                 return 1
             except ValueError:
                 continue
-        print("There is problem with collecting book page count")
+        
         self.output["Page_count"] = "Unknown"
         return -1
 
@@ -143,9 +146,8 @@ class bibliographic_data:
             self.Page_Count(),
         ]
         # print(error_rate)
-        error_rate = (5 - sum(error_rate)) * 10
-        print("Error rate:", error_rate, "%")
-        return self.output
+        error_rate = sum(error_rate)
+        return error_rate
         
 
 class author_info:
@@ -153,13 +155,15 @@ class author_info:
         self.author = author
         self.output = ""
         self.tokens = 250
+        self.category = translateTo(stencil.categories[1], language)
 
-    def get_data(self):
+    def get_data(self, result, index):
         data = openai_response(
             f"give me some info on {self.author} using the text provided as reference, make your text a bit longer than the text provided and try to touch the same points as in the reference text.\n'{stencil.stencil_filled[1]}'",
             self.tokens
         )
-        self.output = data
+        self.output = translateTo(data, language)
+        result[index] = 1
         return 1
 
 
@@ -170,6 +174,7 @@ class style_info:
         self.tokens = 350
         self.style = ""
         self.on_error_repeats = 3
+        self.category = translateTo(stencil.categories[2], language)
 
     def get_style_name(self):
         for _ in range(self.on_error_repeats):
@@ -180,19 +185,35 @@ class style_info:
         self.style = "Unknown"
         return -1
 
-    def get_style_info(self):
+    def get_data(self, result, index):
         if self.get_style_name() == 1:
             data = openai_response(
                 f"write me a text about {self.style}, focus on these points:\n{' '.join(stencil.style_points)}",
                 self.tokens
             )
-            self.output = data
+            self.output = translateTo(data, language)
+            result[index] = 1
             return 1
         else:
             self.output = "Unknown"
-            print("Error with collecting the style info")
+            result[index] = -1
             return -1
 
+
+class content:
+    def __init__(self) -> None:
+        self.output = ""
+        self.tokens = 350
+        self.category = translateTo(stencil.categories[3], language)
+
+    def get_data(self, result, index):
+        data = openai_response(
+            f"write me a text about the story of the book {book}. write about the story only, no other information.",
+            self.tokens,
+        )
+        self.output = translateTo(data, language)
+        result[index] = 1
+        return 1
 
 class characteristics:
     def __init__(self) -> None:
@@ -200,17 +221,20 @@ class characteristics:
         self.output = ""
         self.tokens = 300
         self.on_error_repeats = 3
+        self.category = translateTo(stencil.categories[4], language)
 
-    def get_data(self):
+    def get_data(self, result, index):
         for _ in range(self.on_error_repeats):
             data = openai_response(
                 f"Describe main characters in {book}. Max {self.max_character_count}. Let the each paragraph start with number.",
                 self.tokens
             )
             if (data.count("\n") - 1) <= self.max_character_count:
-                self.output = data
+                self.output = translateTo(data, language)
+                result[index] = 1
                 return 1
         self.output = "Unknown"
+        result[index] = -1
         return -1
 
 
@@ -218,6 +242,7 @@ class type_genre_classification:
     def __init__(self) -> None:
         self.on_error_repeats = 10
         self.literar_class_index: int
+        self.category = translateTo(stencil.categories[5], language)
         self.output = {
             "literar_class": "",
             "genre": "",
@@ -238,11 +263,12 @@ class type_genre_classification:
                 continue
 
         
-        self.output["literar_class"] = f"({data})"
+        self.output["literar_class"] = f"({translateTo(data, language)})"
         return -1
 
-    def complete(self):
+    def complete(self, result, index):
         if self.get_literar_class() == 1:
+            self.output["literar_class"] = translateTo(self.output["literar_class"], language)
             for _ in range(self.on_error_repeats):
                 options = stencil.literar_classes_options[self.literar_class_index]
                 data = openai_response(
@@ -250,35 +276,40 @@ class type_genre_classification:
                 )
                 data = text_only(data)
                 if data.lower() in options:
-                    self.output["genre"] = data
+                    self.output["genre"] = translateTo(data, language)
+                    result[index] = 1
                     return 1
             self.output["genre"] = "Unknown"
+            result[index] = -1
             return -1
         else:
             data = openai_response(
                     f"what genre is the book {book}, single word response only."
                 )
             data = text_only(data)
-            self.output["genre"] = f"({data})"
+            self.output["genre"] = f"({translateTo(data, language)})"
+            result[index] = -1
             return -1
 
 class space_time:
     def __init__(self) -> None:
         self.on_error_repeats = 3
+        self.category = translateTo(stencil.categories[6], language)
         self.output = {
             "place": "",
             "time": "",
         }
 
-    def get_data(self):
+    def get_data(self, result, index):
         data = openai_response(
             f"where the plot of the book {book} takes place. answer as straight as possible.",
         )
-        self.output["place"] = data
+        self.output["place"] = translateTo(data, language)
         data = openai_response(
             f"at what time the plot of the book {book} happened. answer with the time period only.",
         )
-        self.output["time"] = data
+        self.output["time"] = translateTo(data, language)
+        result[index] = 1
         return 1
 
 
@@ -286,46 +317,114 @@ class circumstances:
     def __init__(self) -> None:
         self.output = ""
         self.tokens = 350
+        self.category = translateTo(stencil.categories[7], language)
 
-    def get_data(self):
+    def get_data(self, result, index):
         data = openai_response(
             f"write me a text about the circumstances of writing the book {book}, do not write about the content of the book",
             self.tokens,
         )
-        self.output = data
+        self.output = translateTo(data, language)
+        result[index] = 1
         return 1
 
 class philosophy:
     def __init__(self) -> None:
         self.output = ""
         self.tokens = 350
+        self.category = translateTo(stencil.categories[8], language)
 
-    def get_data(self):
+    def get_data(self, result, index):
         data = openai_response(
             f"write me about the thought of the book {book}, write about the idea, that the book is introducing. do not add any introduction to the text.",
             self.tokens,
         )
-        self.output = data
+        self.output = translateTo(data, language)
+        result[index] = 1
         return 1
     
 class opinion:
     def __init__(self) -> None:
         self.output = ""
         self.tokens = 350
+        self.category = translateTo(stencil.categories[9], language)
 
-    def get_data(self):
+    def get_data(self, result, index):
         data = openai_response(
             f"write me a text as a student talking about his opinions on the book {book}.",
             self.tokens,
         )
-        self.output = data
+        self.output = translateTo(data, language)
+        result[index] = 1
         return 1
 
 
 
-book = "Boule de Suif"
+book = "Máj"
+language = "CS"
+
+bib = bibliographic_data(language)
+bib.complete()
+Author = bib.output["Author"]
+
+aut = author_info(Author)
+sty = style_info(Author)
+con = content()
+cha = characteristics()
+typ = type_genre_classification()
+spa = space_time()
+cir = circumstances()
+phi = philosophy()
+opi = opinion()
+
+text_classes = [bib, aut, sty, con, cha, typ, spa, cir, phi, opi]
+results = [None] * 9
+
+t1 = threading.Thread(target=aut.get_data, args=(results, 0))
+t2 = threading.Thread(target=sty.get_data, args=(results, 1))
+t3 = threading.Thread(target=con.get_data, args=(results, 2))
+t4 = threading.Thread(target=cha.get_data, args=(results, 3))
+t5 = threading.Thread(target=typ.complete, args=(results, 4))
+t6 = threading.Thread(target=spa.get_data, args=(results, 5))
+t7 = threading.Thread(target=cir.get_data, args=(results, 6))
+t8 = threading.Thread(target=phi.get_data, args=(results, 7))
+t9 = threading.Thread(target=opi.get_data, args=(results, 8))
+
+threads = [t1, t2, t3, t4, t5, t6, t7, t8, t9]
 
 
-a = philosophy()
-a.get_data()
-print(a.output)
+for t in threads:
+    t.start()
+
+for t in threads:
+    t.join()
+
+for i, value in enumerate(results):
+    if value == None:
+        results[i] = -1
+
+error_rate = (len(threads) - sum(results)) / (len(threads) * 2)
+
+print(results)
+print(error_rate)
+
+#create word document
+
+document = Document()
+
+document.add_heading(translateTo("Čtenářský deník", language))
+
+for text_class in text_classes:
+    document.add_heading(text_class.category, 2)
+
+    if type(text_class.output) == type("lol"):
+        document.add_paragraph(str(text_class.output))
+    
+    else:
+        keys = list(text_class.output.keys())
+        for key in keys:
+            document.add_heading(key, 3)
+            document.add_paragraph(str(text_class.output[key]))
+
+
+document.save("result.docx")

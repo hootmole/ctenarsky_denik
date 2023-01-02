@@ -212,3 +212,16 @@ literar_classes_options = [
     epic_genres,
     drama_genres, 
 ]
+
+categories = [
+    "Bibliografické údaje",
+    "Informace o autorovi",
+    "Informace o lit. směru",
+    "Obsah díla",
+    "Charakteristika hl. postav",
+    "Lit. druh a žánr",
+    "Časoprostor",
+    "Okolnosti vzniku díla",
+    "Hl. myšlenka",
+    "Vlastní názor",
+]
